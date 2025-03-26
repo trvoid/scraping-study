@@ -10,6 +10,8 @@ from urllib.parse import urlparse, parse_qs
 import requests
 from bs4 import BeautifulSoup
 
+LIST_FILE_SEP = ' '
+HISTORY_FILE_SEP = '\t'
 STATUS_CODE_SUCCESS = 200
 CONTENT_LENGTH_MIN = 2000
 
@@ -45,11 +47,11 @@ def one_url(url, desc='', outdir='output', history_file='history.txt'):
     # 1. 이미 스크래핑한 목록에 있는지 검사
     column_names = ['scraped_time', 'output_file', 'url', 'desc']
 
-    if not os.path.isfile(history_file):
+    if not os.path.isfile(history_file) or os.path.getsize(history_file) == 0:
         with open(history_file, mode='w', encoding='utf-8') as f:
-            f.write(','.join(column_names) + '\n')
+            f.write(HISTORY_FILE_SEP.join(column_names) + '\n')
 
-    history_db = pd.read_csv(history_file, names=column_names)
+    history_db = pd.read_csv(history_file, sep=HISTORY_FILE_SEP, names=column_names)
     if url in history_db['url'].values:
         print('Already in the history: ' + url)
         return
@@ -87,11 +89,11 @@ def one_url(url, desc='', outdir='output', history_file='history.txt'):
                 f.write(text + '\n')
 
     # 7. 이력 파일에 추가
-    history = f'{scraped_time_str},{output_file},{url},{desc}'
+    history = HISTORY_FILE_SEP.join([scraped_time_str, output_file, url, desc])
     with open(history_file, mode='a', encoding='utf-8') as f:
         f.write(history + '\n')
 
-    print('Added a history: ' + history)
+    print('New history: ' + history)
     
 def url_list(list_file, outdir='output', history_file='history.txt'):
     with open(list_file, mode='r', encoding='utf-8') as f:
@@ -99,8 +101,10 @@ def url_list(list_file, outdir='output', history_file='history.txt'):
 
     for line in lines:
         line = line.strip()
+        if len(line) == 0:
+            continue
         pos = line.find(' ')
-        url = line[0:pos]
+        url = line if pos < 0 else line[0:pos]
         desc = line[pos+1:] if pos > 0 else ''
         #print(f'{url} {desc}')
         one_url(url, desc, outdir, history_file)
