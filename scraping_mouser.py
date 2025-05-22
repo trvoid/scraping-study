@@ -22,8 +22,8 @@ CONTENT_LENGTH_MIN = 2000
 def get_current_time_str():
     return datetime.now().strftime('%Y%m%d_%H%M%S')
 
-def extract_texts(page):
-    soup = BeautifulSoup(page.content, 'html.parser')
+def extract_texts(content):
+    soup = BeautifulSoup(content, 'html.parser')
 
     # 부품 번호
     part_number = soup.find(id='spnManufacturerPartNumber')
@@ -76,7 +76,7 @@ def one_url(url, desc='', outdir=OUTPUT_DIR, history_dir=HISTORY_DIR, work_name=
         return
 
     # 5. 웹 페이지에서 텍스트 추출
-    texts = extract_texts(page)
+    texts = extract_texts(page.content)
 
     # 6. 텍스트를 결과 파일에 저장
     with open(output_file, mode='w', encoding='utf-8') as f:
